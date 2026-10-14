@@ -1,4 +1,4 @@
-package ru.kaminfsol.notes
+package ru.kaminfsol.notes.views
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,19 +16,40 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.collectLatest
+import ru.kaminfsol.notes.database.Note
+import ru.kaminfsol.notes.models.NoteViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddNoteScreen(onBackClick: () -> Unit, onSaveClick: (String, String) -> Unit) {
+fun AddNoteScreen(
+    noteId: Int? = null,
+    viewModel: NoteViewModel,
+    onBackClick: () -> Unit
+) {
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
+    var isEditing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(noteId) {
+        if (noteId != null) {
+            viewModel.getNoteById(noteId).collectLatest { note ->
+                note?.let {
+                    title = it.title
+                    content = it.content
+                    isEditing = true
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -69,12 +90,26 @@ fun AddNoteScreen(onBackClick: () -> Unit, onSaveClick: (String, String) -> Unit
 
             Button(
                 onClick = {
-                    if (title.isNotBlank()) onSaveClick(title, content)
+                    if (title.isNotBlank()) {
+                        if (isEditing && noteId != null) {
+                            viewModel.updateNote(
+                                Note(
+                                    id = noteId,
+                                    title = title,
+                                    content = content,
+                                    timeStamp = System.currentTimeMillis()
+                                )
+                            )
+                        } else {
+                            viewModel.saveNote(title, content)
+                        }
+                        onBackClick()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = title.isNotBlank()
             ) {
-                Text("Сохранить")
+                Text(if (isEditing) "Обновить" else "Сохранить")
             }
         }
     }

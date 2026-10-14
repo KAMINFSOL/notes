@@ -1,6 +1,5 @@
-package ru.kaminfsol.notes
+package ru.kaminfsol.notes.views
 
-import android.app.Application
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,16 +28,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import ru.kaminfsol.notes.models.NoteViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onAddNoteClick: () -> Unit) {
-    val viewModel = viewModel<NoteViewModel>(
-        factory = NoteViewModel.Factory(LocalContext.current.applicationContext as Application)
-    )
+fun HomeScreen(
+    viewModel: NoteViewModel,
+    onAddNoteClick: () -> Unit,
+    onNoteClick: (Int) -> Unit
+) {
     val notes by viewModel.noteList.collectAsState()
 
     Scaffold(
@@ -64,7 +63,7 @@ fun HomeScreen(onAddNoteClick: () -> Unit) {
             ) {
                 items(notes) { note ->
                     Card(
-                        modifier = Modifier.fillMaxWidth().clickable { TODO() },
+                        modifier = Modifier.fillMaxWidth().clickable { onNoteClick(note.id) },
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {

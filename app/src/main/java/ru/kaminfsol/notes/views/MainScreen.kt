@@ -1,4 +1,4 @@
-package ru.kaminfsol.notes
+package ru.kaminfsol.notes.views
 
 import android.app.Application
 import androidx.compose.foundation.layout.padding
@@ -15,13 +15,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import ru.kaminfsol.notes.models.NoteViewModel
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
     object Home : BottomNavItem("home", Icons.Default.Home, "Главная")
@@ -32,6 +36,12 @@ sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: 
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
+    val viewModel: NoteViewModel = viewModel(
+        factory = NoteViewModel.Factory(
+            LocalContext.current.applicationContext as Application
+        )
+    )
+
     val bottomBarScreens = listOf(
         BottomNavItem.Home.route,
         BottomNavItem.Settings.route,
@@ -70,20 +80,30 @@ fun MainScreen() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(BottomNavItem.Home.route) {
-                HomeScreen(onAddNoteClick = { navController.navigate("add_note") })
+                HomeScreen(
+                    viewModel = viewModel,
+                    onAddNoteClick = { navController.navigate("add_note") },
+                    onNoteClick = { noteId -> navController.navigate("edit_note/$noteId") }
+                )
             }
             composable(BottomNavItem.Settings.route) { SettingsScreen() }
             composable(BottomNavItem.About.route) { AboutScreen() }
             composable("add_note") {
-                val viewModel = viewModel<NoteViewModel>(
-                    factory = NoteViewModel.Factory(androidx.compose.ui.platform.LocalContext.current.applicationContext as Application)
-                )
                 AddNoteScreen(
-                    onBackClick = { navController.popBackStack() },
-                    onSaveClick = { title, content ->
-                        viewModel.saveNote(title, content)
-                        navController.popBackStack()
-                    }
+                    noteId = null,
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable(
+                route = "edit_note/{noteId}",
+                arguments = listOf(navArgument("noteId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getInt("noteId")
+                AddNoteScreen(
+                    noteId = noteId,
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() }
                 )
             }
         }

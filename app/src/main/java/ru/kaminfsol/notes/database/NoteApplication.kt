@@ -1,4 +1,4 @@
-package ru.kaminfsol.notes
+package ru.kaminfsol.notes.database
 
 import android.app.Application
 import androidx.room.Room

@@ -1,4 +1,4 @@
-package ru.kaminfsol.notes
+package ru.kaminfsol.notes.views
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
